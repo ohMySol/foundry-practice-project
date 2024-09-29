@@ -6,7 +6,7 @@ interface RaffleCustomErrors {
     error Raffle_NotEnoughFee();
 
     /// Indicates that we can't select a new winner, because time interval not yet passed.
-    error Raffle_TimeIntervalNotElapsed();
+    error Raffle_UpKeepNeededFalse(uint256, uint256, uint256);
 
     /// Indicates that tthere is an error with the prize transfer for the winner.
     error Raffle_TransferFailed();
