@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {RaffleCustomErrors} from "./interfaces/CustomErrors.sol";
+import {IRaffleCustomErrors} from "./interfaces/ICustomErrors.sol";
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
@@ -11,10 +11,9 @@ import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/V
  * @notice This contract is showing the raffle logic on chain.
  * @dev Raffle contract which implements Chainlink VRF and Automation.
  */
-contract Raffle is VRFConsumerBaseV2Plus, RaffleCustomErrors {
+contract Raffle is VRFConsumerBaseV2Plus, IRaffleCustomErrors {
     enum RaffleStatus {
         Open,
-        Paused,
         InProgress
     }
     // VRF var-s
@@ -62,7 +61,7 @@ contract Raffle is VRFConsumerBaseV2Plus, RaffleCustomErrors {
      */
     function enterRaffle() external payable {
         if (raffleStatus != RaffleStatus(0)) {
-            revert Raffle_RaffleIsOnPause();
+            revert Raffle_RaffleIsInProgress();
         }
         if (msg.value < entranceFee) {
             revert Raffle_NotEnoughFee();
@@ -109,7 +108,7 @@ contract Raffle is VRFConsumerBaseV2Plus, RaffleCustomErrors {
             revert Raffle_UpKeepNeededFalse(address(this).balance, players.length, uint256(raffleStatus));
         }
         
-        raffleStatus = RaffleStatus(2);
+        raffleStatus = RaffleStatus(1);
         
         // Request random number from VRF
         s_vrfCoordinator.requestRandomWords(
@@ -148,4 +147,16 @@ contract Raffle is VRFConsumerBaseV2Plus, RaffleCustomErrors {
     function getEntranceFee() public view returns (uint256) {
         return entranceFee;
     }
+
+    /**
+     * @dev Function return a current status of the Raffle.
+     * @return RaffleStatus return 'RaffleStatus' status in which currently the lottery is.
+     */
+    function getRaffleStatus() public view returns (RaffleStatus) {
+        return raffleStatus;        
+    }
+
+    function getPlayers() public view returns(address payable[] memory) {
+        return players;
+    } 
 }
