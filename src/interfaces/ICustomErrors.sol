@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-interface RaffleCustomErrors {
+/// Raffle contract errors.
+interface IRaffleCustomErrors {
     /// Indicates that user provide not enough fee value to enter a raffle.
     error Raffle_NotEnoughFee();
 
@@ -12,5 +13,10 @@ interface RaffleCustomErrors {
     error Raffle_TransferFailed();
 
     // Indicates that currently raffle contract is paused.
-    error Raffle_RaffleIsOnPause();
+    error Raffle_RaffleIsInProgress();
+}
+
+/// HelperConfig script errors.
+interface IHelperConfigCustomErrors {
+    error HelperConfig_NotSupportedChain();
 }
