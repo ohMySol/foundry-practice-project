@@ -4,9 +4,10 @@ pragma solidity 0.8.19;
 import {Script} from "forge-std/Script.sol";
 import {IHelperConfigCustomErrors} from "../src/interfaces/ICustomErrors.sol";
 import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
+import {LinkToken} from "../test/mocks/LinkToken.sol";
 
-abstract contract CodeCostants {
-    uint256 public constant ETH_SEPOLIA_CHAIN_ID = 1115511;
+abstract contract CodeConstants {
+    uint256 public constant ETH_SEPOLIA_CHAIN_ID = 11155111;
     uint256 public constant LOCAL_CHAIN_ID = 31337;
     // VRF mock constructor arguments
     uint96 public constant MOCK_BASE_FEE = 0.25 ether;
@@ -14,7 +15,7 @@ abstract contract CodeCostants {
     int256 public constant MOCK_WEI_PER_UNIT_LINK = 4e15;
 }
 
-contract HelperConfig is Script, CodeCostants, IHelperConfigCustomErrors {
+contract HelperConfig is Script, CodeConstants, IHelperConfigCustomErrors {
     struct NetworkConfig {
         address vrfCoordinator;
         bytes32 keyHash;
@@ -22,6 +23,7 @@ contract HelperConfig is Script, CodeCostants, IHelperConfigCustomErrors {
         uint32 callbackGasLimit;
         uint256 entranceFee; 
         uint256 interval;
+        address linkToken;
     }
     NetworkConfig public localNetworkConfig;
 
@@ -57,7 +59,9 @@ contract HelperConfig is Script, CodeCostants, IHelperConfigCustomErrors {
                 MOCK_GAS_PRICE_LINK,
                 MOCK_WEI_PER_UNIT_LINK
             );
+            LinkToken linkToken = new LinkToken();
             vm.stopBroadcast();
+
             // create config for local env network.
             localNetworkConfig = NetworkConfig({
                 vrfCoordinator: address(vrfCoordinatorMock),
@@ -65,7 +69,8 @@ contract HelperConfig is Script, CodeCostants, IHelperConfigCustomErrors {
                 subscriptionId: 0,
                 callbackGasLimit: 500000,
                 entranceFee: 0.01 ether,
-                interval: 30 // 30 sec
+                interval: 30, // 30 sec
+                linkToken: address(linkToken)
             });
             
             return localNetworkConfig;
@@ -79,7 +84,8 @@ contract HelperConfig is Script, CodeCostants, IHelperConfigCustomErrors {
             subscriptionId: 0,
             callbackGasLimit: 500000,
             entranceFee: 0.01 ether,
-            interval: 30 // 30 sec
+            interval: 30, // 30 sec
+            linkToken: 0x779877A7B0D9E8603169DdbD7836e478b4624789
         });
     }
 }
