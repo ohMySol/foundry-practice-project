@@ -12,6 +12,7 @@ import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/V
  * @dev Raffle contract which implements Chainlink VRF and Automation.
  */
 contract Raffle is VRFConsumerBaseV2Plus, IRaffleCustomErrors {
+        
     enum RaffleStatus {
         Open,
         InProgress
@@ -29,9 +30,6 @@ contract Raffle is VRFConsumerBaseV2Plus, IRaffleCustomErrors {
     address payable[] players;
     address payable recentWinner;
     RaffleStatus public raffleStatus;
-
-    // user 'address' => 'requestId' => 'calculationStatus' status
-    //mapping (address => mapping(uint256 => calculationStatus)) public requestStatus;
     
     event RaffleEntered(address indexed player);
     event WinnerSelected(address indexed winner);
@@ -55,7 +53,7 @@ contract Raffle is VRFConsumerBaseV2Plus, IRaffleCustomErrors {
     }
 
     /**
-     * @dev To participate in raffle players should enter first into the raffle.
+     * @dev To participate in raffle players should enter into the raffle.
      * 1. To enter into the raffle players should pay a 'entranceFee' fee.
      * 2. Players can enter inthe raffle only if it is in 'Open' status. 
      */
@@ -71,15 +69,14 @@ contract Raffle is VRFConsumerBaseV2Plus, IRaffleCustomErrors {
         emit RaffleEntered(msg.sender);
     }
 
-    // When should the winner be picked
     /**
      * @dev This function will be called by Chainlnk nodes, in order to see
      * if the lottery is ready to select a new winner. The following should be true
-     * in order for unkeepNeeded to be true:
+     * in order for 'upkeepNeeded' to be true:
      * 1. Time 'interval' has elapsed since the 'lastTimeStamp'.
-     * 2. The lottery is in Open status.
+     * 2. The lottery is in 'Open' status.
      * 3. The contract has ETH and has players.
-     * 4. Imlicitly, your subscription  has LINK tokens.
+     * 4. Implicitly, your subscription  has LINK tokens.
      * @param - ignored.
      * @return upkeepNeeded - returns true if it is a time to restart the lottery.
      * @return - ignored.
@@ -124,6 +121,13 @@ contract Raffle is VRFConsumerBaseV2Plus, IRaffleCustomErrors {
         );
     }
 
+    /**
+     * @dev Chainlink nodes will do a callback to this funcition once calculated a random number.
+     * Once random number is returned, we calculate a 'randomWinnerIndex' and select 'theWinner'
+     * from the 'players' array.
+     * @param - ignored. 
+     * @param randomWords - randomly calcuated 'uint256' number by VRF.
+     */
     function fulfillRandomWords(uint256 /* requestId */, uint256[] calldata randomWords) internal override {
         uint256 randomWinnerIndex = randomWords[0] % players.length;
         address payable theWinner = players[randomWinnerIndex];
@@ -156,6 +160,10 @@ contract Raffle is VRFConsumerBaseV2Plus, IRaffleCustomErrors {
         return raffleStatus;        
     }
 
+    /**
+     * @dev Getter function to return 'players' array.
+     * @return array of players addresses.
+     */
     function getPlayers() public view returns(address payable[] memory) {
         return players;
     } 
