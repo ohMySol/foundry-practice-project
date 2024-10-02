@@ -10,8 +10,10 @@ import {IRaffleCustomErrors} from "../../src/interfaces/ICustomErrors.sol";
 contract RaffleTest is Test {
     Raffle public raffle; // blueprint of the Raffle contract.
     HelperConfig public helperConfig; // blueprint of the HelperConfig contract.
-    HelperConfig.NetworkConfig networkConfig;
+    HelperConfig.NetworkConfig networkConfig; //NEtworkConfig struct
+    
     address public alice = makeAddr("alice");
+    address public bob = makeAddr("bob");
     uint256 public constant STARTING_PLAYER_BALANCE = 10 ether;
 
     event RaffleEntered(address indexed player);
@@ -59,14 +61,17 @@ contract RaffleTest is Test {
         raffle.enterRaffle();
     }
 
+    // Test fails with the reason: "next call did not revert as expected"
+    // Need to solve this.
+    // If comment the expect.. line - test will show the expected revert error.
     function testRaffleRevertWhenPlayerEnterRaffleInNonOpenStatus() public {
-        vm.startPrank(alice);
+        vm.prank(alice);
         
         raffle.enterRaffle{value: raffle.getEntranceFee()}();
         vm.warp(block.timestamp + networkConfig.interval + 1); // current block + 31 seconds.
         vm.roll(block.number + 1); // since the time has elapsed the new block has been added.
-        raffle.performUpKeep("");
-
+        raffle.performUpKeep(""); // change status to 'InProgress'
+        
         vm.expectRevert(IRaffleCustomErrors.Raffle_RaffleIsInProgress.selector);
         vm.prank(alice);
         raffle.enterRaffle{value: raffle.getEntranceFee()}();
