@@ -12,11 +12,11 @@ import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/V
  * @dev Raffle contract which implements Chainlink VRF and Automation.
  */
 contract Raffle is VRFConsumerBaseV2Plus, IRaffleCustomErrors {
-        
     enum RaffleStatus {
         Open,
         InProgress
     }
+    
     // VRF var-s
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private constant NUM_WORDS =  1;
@@ -33,7 +33,7 @@ contract Raffle is VRFConsumerBaseV2Plus, IRaffleCustomErrors {
     
     event RaffleEntered(address indexed player);
     event WinnerSelected(address indexed winner);
-    
+
     constructor(
         address _vrfCoordinator,
         bytes32 _keyHash,
