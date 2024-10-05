@@ -19,18 +19,19 @@ contract DeployRaffle is Script {
             // create subscription
             CreateSubscription createSubscription = new CreateSubscription();
             (config.subscriptionId, config.vrfCoordinator) = 
-                createSubscription.createSubscription(config.vrfCoordinator);
+                createSubscription.createSubscription(config.vrfCoordinator, config.account);
             // fund subscription
             FundSubscription fundSubscription = new FundSubscription();
             fundSubscription.fundSubscription(
                 config.vrfCoordinator,
                 config.subscriptionId,
-                config.linkToken
+                config.linkToken,
+                config.account
             );
         }
 
         // deploy Raffle contract
-        vm.startBroadcast();
+        vm.startBroadcast(config.account); // config.account - means the following tx will be broadcasted from this account
         Raffle raffle = new Raffle(
             config.vrfCoordinator,
             config.keyHash,
@@ -46,7 +47,8 @@ contract DeployRaffle is Script {
         addConsumer.addNewConsumer(
             address(raffle), 
             config.vrfCoordinator,
-            config.subscriptionId
+            config.subscriptionId,
+            config.account
         );
 
         return (raffle, helperConfig);
