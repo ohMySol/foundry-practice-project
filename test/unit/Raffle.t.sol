@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test, console, console2} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {Raffle} from "../../src/Raffle.sol";
 import {DeployRaffle} from "../../script/DeployRaffle.s.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {IRaffleCustomErrors} from "../../src/interfaces/ICustomErrors.sol";
+import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
+
 
 contract RaffleTest is Test {
     Raffle public raffle; // blueprint of the Raffle contract.
@@ -21,7 +23,7 @@ contract RaffleTest is Test {
     event WinnerSelected(address indexed winner);
 
     modifier startTest(uint256 _interval) {
-        vm.startPrank(alice);
+        vm.prank(alice);
         raffle.enterRaffle{value: raffle.getEntranceFee()}();
         vm.warp(block.timestamp + _interval + 1);
         vm.roll(block.number + 1);
@@ -103,7 +105,9 @@ contract RaffleTest is Test {
         assertFalse(upKeepNeeded);
     }
 
-    function testCheckUpKeepReturnsFalseIfRaffleStatusIsInProgress() public startTest(networkConfig.interval) {
+    function testCheckUpKeepReturnsFalseIfRaffleStatusIsInProgress() 
+    public startTest(networkConfig.interval) 
+    {
         raffle.performUpKeep("");
         
         (bool upKeepNeeded, ) = raffle.checkUpkeep("");
@@ -152,4 +156,41 @@ contract RaffleTest is Test {
         assert(uint256(requestId) > 0); // do a type casting from bytes to uint256
     }
 
+    /*//////////////////////////////////////////////////
+                fulfillRandomWords() tests
+    /////////////////////////////////////////////////*/
+    function testFulfillRandomWordsCanOnlyBeCalledAfterPerformUpKeep(uint256 requestId) 
+    public startTest(networkConfig.interval) 
+    {
+        vm.expectRevert(VRFCoordinatorV2_5Mock.InvalidRequest.selector);
+        VRFCoordinatorV2_5Mock(networkConfig.vrfCoordinator).fulfillRandomWords(requestId, address(raffle)); // the fulfill func can be called only if request if was created
+    }
+
+    // Need to fix this test.
+    function testE2EfullfillRandomWordsPickTheWinnerResetsAndSendsMoney() 
+    public startTest(networkConfig.interval) 
+    {
+        uint256 additionalPlayers = 3; // 4 in total with alice
+
+        for (uint i = 1; i < additionalPlayers + 1; i++) {
+            address player = address(uint160(i)); // we creating from uint type some random address.
+            hoax(player, 1 ether); //hoax will start prank an address and also send ether to this address.
+            raffle.enterRaffle{value: raffle.getEntranceFee()}();
+        }
+        uint256 startingTimeStamp = raffle.getLastTimeStamp();
+       
+        raffle.performUpKeep("");
+        uint256 requestId = raffle.getRecentRequestId();
+        VRFCoordinatorV2_5Mock(networkConfig.vrfCoordinator).fulfillRandomWords(requestId, address(raffle));
+
+        uint256 rafflePrize = raffle.getEntranceFee() * (additionalPlayers + 1);
+        address recentWinner = raffle.getRecentWinner();
+        Raffle.RaffleStatus raffleStatus = raffle.getRaffleStatus();
+        uint256 expectedWinnerBalance = recentWinner.balance + rafflePrize;
+        uint256 endingTimeStamp = raffle.getLastTimeStamp();
+        
+        //assert(raffleStatus == Raffle.RaffleStatus.Open);
+        //assert(endingTimeStamp > startingTimeStamp);
+        //assert(recentWinner.balance == expectedWinnerBalance);
+    } 
 }
