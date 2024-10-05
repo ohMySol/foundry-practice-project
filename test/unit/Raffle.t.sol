@@ -16,7 +16,6 @@ contract RaffleTest is Test {
     HelperConfig.NetworkConfig networkConfig; //NEtworkConfig struct
     
     address public alice = makeAddr("alice");
-    address public bob = makeAddr("bob");
     uint256 public constant STARTING_PLAYER_BALANCE = 10 ether;
 
     event RaffleEntered(address indexed player);
@@ -31,10 +30,10 @@ contract RaffleTest is Test {
     }
 
     function setUp() public {
+        vm.deal(alice, STARTING_PLAYER_BALANCE);
         DeployRaffle deployer = new DeployRaffle(); // create an instance of the deploy script.
         (raffle, helperConfig) = deployer.deploy(); // deploy Raffle contract.
         networkConfig = helperConfig.getConfigByChainId(block.chainid);
-        vm.deal(alice, STARTING_PLAYER_BALANCE);
     }
     
     /*//////////////////////////////////////////////////
