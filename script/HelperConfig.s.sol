@@ -24,6 +24,7 @@ contract HelperConfig is Script, CodeConstants, IHelperConfigCustomErrors {
         uint256 entranceFee; 
         uint256 interval;
         address linkToken;
+        address account;
     }
     NetworkConfig public localNetworkConfig;
 
@@ -70,7 +71,8 @@ contract HelperConfig is Script, CodeConstants, IHelperConfigCustomErrors {
                 callbackGasLimit: 500000,
                 entranceFee: 0.01 ether,
                 interval: 30, // 30 sec
-                linkToken: address(linkToken)
+                linkToken: address(linkToken),
+                account: 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38 //default sender from Base.sol
             });
             
             return localNetworkConfig;
@@ -85,7 +87,8 @@ contract HelperConfig is Script, CodeConstants, IHelperConfigCustomErrors {
             callbackGasLimit: 500000,
             entranceFee: 0.01 ether,
             interval: 30, // 30 sec
-            linkToken: 0x779877A7B0D9E8603169DdbD7836e478b4624789
+            linkToken: 0x779877A7B0D9E8603169DdbD7836e478b4624789,
+            account: 0xD34B89262A8B9da21745c085F61502AFD6144066
         });
     }
 }

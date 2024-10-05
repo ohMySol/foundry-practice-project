@@ -13,15 +13,16 @@ contract CreateSubscription is Script {
     function createSubscriptionUsingConfig() public returns (uint256, address) {
         HelperConfig helperConfig = new HelperConfig();
         address vrfCoordinator = helperConfig.getConfig().vrfCoordinator;
-        (uint256 subId, ) = createSubscription(vrfCoordinator);
+        address account = helperConfig.getConfig().account;
+        (uint256 subId, ) = createSubscription(vrfCoordinator, account);
         return(subId, vrfCoordinator);
     }
 
     /// This function will programmatically create a subscription.
-    function createSubscription(address _vrfCoordinator) public returns (uint256, address) {
+    function createSubscription(address _vrfCoordinator, address _account) public returns (uint256, address) {
         // solhint-disable
         console.log("Creating subscription on chain id: ", block.chainid);
-        vm.startBroadcast();
+        vm.startBroadcast(_account);
         uint256 subId = VRFCoordinatorV2_5Mock(_vrfCoordinator).createSubscription();
         vm.stopBroadcast();
         // solhint-disable
@@ -41,12 +42,13 @@ contract FundSubscription is Script, CodeConstants {
         HelperConfig helperConfig = new HelperConfig();
         address vrfCoordinator = helperConfig.getConfig().vrfCoordinator;
         uint256 subscriptionId = helperConfig.getConfig().subscriptionId;
+        address account = helperConfig.getConfig().account;
         address linkToken = helperConfig.getConfig().linkToken;
-        fundSubscription(vrfCoordinator, subscriptionId, linkToken);
+        fundSubscription(vrfCoordinator, subscriptionId, linkToken, account);
     }
 
     /// This function will programmatically fund a subscription.
-    function fundSubscription(address _vrfCoordinator, uint256 _subscriptionId,address _linkToken) public {
+    function fundSubscription(address _vrfCoordinator, uint256 _subscriptionId,address _linkToken, address _account) public {
         console.log("Funding subscription: ", _subscriptionId);
         console.log("Using VRFCoordinator: ", _vrfCoordinator);
         console.log("On chain id: ", block.chainid);
@@ -55,7 +57,7 @@ contract FundSubscription is Script, CodeConstants {
             VRFCoordinatorV2_5Mock(_vrfCoordinator).fundSubscription(_subscriptionId, FUND_AMOUNT * 100);
             vm.stopBroadcast();
         } else {
-            vm.startBroadcast();
+            vm.startBroadcast(_account);
             LinkToken(_linkToken).transferAndCall(_vrfCoordinator, FUND_AMOUNT, abi.encode(_subscriptionId));
             vm.stopBroadcast();
         }
@@ -71,22 +73,23 @@ contract AddConsumer is Script {
         HelperConfig helperConfig = new HelperConfig();
         address vrfCoordinator = helperConfig.getConfig().vrfCoordinator;
         uint256 subscriptionId = helperConfig.getConfig().subscriptionId;
-        addNewConsumer(_mostRecentlyDeployed, vrfCoordinator, subscriptionId);        
+        address account = helperConfig.getConfig().account;
+        addNewConsumer(_mostRecentlyDeployed, vrfCoordinator, subscriptionId, account);        
     }
 
     /// This function will programmatically add a consumer to subscription.
-    function addNewConsumer(address _consumerContract, address _vrfCoordinator, uint256 _subId) public { // '_consumerContract' is the most recently deployed Raffle contract
+    function addNewConsumer(address _consumerContract, address _vrfCoordinator, uint256 _subId, address _account) public { // '_consumerContract' is the most recently deployed Raffle contract
         console.log("Adding consumer for contract: ", _consumerContract);
         console.log("To vrfCoordinator: ", _vrfCoordinator);
         console.log("On chain id: ", block.chainid);
 
-        vm.startBroadcast();
+        vm.startBroadcast(_account);
         VRFCoordinatorV2_5Mock(_vrfCoordinator).addConsumer(_subId, _consumerContract);
         vm.stopBroadcast();
     }
 
     function run() external {
-        address mostRecentlyDeployedRaffleContract = DevOpsTools.get_most_recent_deployment("Raffle", block.chainid);
+        address mostRecentlyDeployedRaffleContract = DevOpsTools.get_most_recent_deployment("Raffle", block.chainid); // take the most recent deployed raffle contract
         addCounsumerUsingConfig(mostRecentlyDeployedRaffleContract);
     }
 }
