@@ -27,6 +27,7 @@ contract Raffle is VRFConsumerBaseV2Plus, IRaffleCustomErrors {
     uint256 private immutable entranceFee;
     uint256 private immutable interval;
     uint256 private lastTimeStamp;
+    uint256 private recentRequestId;
     address payable[] players;
     address payable recentWinner;
     RaffleStatus public raffleStatus;
@@ -108,7 +109,7 @@ contract Raffle is VRFConsumerBaseV2Plus, IRaffleCustomErrors {
         raffleStatus = RaffleStatus(1);
         
         // Request random number from VRF
-        s_vrfCoordinator.requestRandomWords(
+        uint256 requestId = s_vrfCoordinator.requestRandomWords(
             VRFV2PlusClient.RandomWordsRequest({
                 keyHash: keyHash,
                 subId: subscriptionId,
@@ -119,6 +120,7 @@ contract Raffle is VRFConsumerBaseV2Plus, IRaffleCustomErrors {
                 extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false}))
             })
         );
+        recentRequestId = requestId;
     }
 
     /**
@@ -137,11 +139,12 @@ contract Raffle is VRFConsumerBaseV2Plus, IRaffleCustomErrors {
         players = new address payable[](0);
         lastTimeStamp = block.timestamp;
         
+        emit WinnerSelected(theWinner);
+
         (bool success, ) = theWinner.call{value: address(this).balance}("");
         if (!success) {
             revert Raffle_TransferFailed();
         }
-        emit WinnerSelected(theWinner);
     }
 
     /**
@@ -167,4 +170,24 @@ contract Raffle is VRFConsumerBaseV2Plus, IRaffleCustomErrors {
     function getPlayers() public view returns(address payable[] memory) {
         return players;
     } 
+
+    /**
+     * @dev Getter function to return 'lastTimeStamp' value.
+     * @return uint256 'lastTimeStamp'.
+     */
+    function getLastTimeStamp() public view returns (uint256) {
+        return lastTimeStamp;
+    }
+
+    /**
+     * @dev Getter function to return 'recentWinner' address.
+     * @return address 'recentWinner'.
+     */
+    function getRecentWinner() public view returns (address) {
+        return recentWinner;
+    }
+
+    function getRecentRequestId() public view returns(uint256) {
+        return recentRequestId;
+    }
 }
